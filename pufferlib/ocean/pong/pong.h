@@ -313,7 +313,7 @@ void c_render(Pong* env) {
         WHITE
     );
 
-    //DrawFPS(10, 10);
+    DrawFPS(10, 10);
 
     // Draw scores
     DrawText(
