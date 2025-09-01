@@ -112,7 +112,7 @@ void compute_observations(Football* env) {
         env->observations[obs_idx++] = agent->y/env->height;
     }
 }
- 
+
 // Required function
 void c_reset(Football* env) {
     for (int i=0; i<env->num_agents; i++) {
