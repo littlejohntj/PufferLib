@@ -184,7 +184,7 @@
     BeginDrawing();
     ClearBackground((Color){116, 159, 55, 255});
 
-    float border_size = 10;
+    float border_size = 5;
 
     // Draw the field left side border
     DrawRectangle(
@@ -246,7 +246,7 @@
             (Color){255, 0, 0, 255}
         );
     }
- 
+
     EndDrawing();
  }
  
