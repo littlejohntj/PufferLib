@@ -23,7 +23,7 @@
      Texture2D puffer;
      Texture2D star;
  } Client;
- 
+
  typedef struct {
      float x;
      float y;
@@ -147,7 +147,7 @@
          agent->heading = clip(agent->heading, 0, 2*PI);
  
          agent->speed += 1.0f*((float)env->actions[2*i + 1] - 2.0f);
-         agent->speed = clip(agent->speed, -20.0f, 20.0f);
+         agent->speed = clip(agent->speed, -5.0f, 5.0f);
  
          agent->x += agent->speed*cosf(agent->heading);
          agent->x = clip(agent->x, 0, env->width);
