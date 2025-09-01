@@ -6,8 +6,8 @@
  #include "puffernet.h"
  
  int main() {
-     int num_agents = 8;
-     int num_goals = 4;
+     int num_agents = 2;
+     int num_goals = 1;
      int num_obs = 2*(num_agents + num_goals) + 4;
  
      // Weights are exported by running puffer export

@@ -7,8 +7,8 @@ import pufferlib
 from pufferlib.ocean.football import binding
 
 class Football(pufferlib.PufferEnv):
-    def __init__(self, num_envs=1, width=1080, height=720, num_agents=8,
-            num_goals=4, render_mode=None, log_interval=128, size=11, buf=None, seed=0):
+    def __init__(self, num_envs=1, width=1080, height=720, num_agents=2,
+            num_goals=1, render_mode=None, log_interval=128, size=11, buf=None, seed=0):
         self.single_observation_space = gymnasium.spaces.Box(low=0, high=1,
             shape=(2*(num_agents+num_goals) + 4,), dtype=np.float32)
         self.single_action_space = gymnasium.spaces.MultiDiscrete([9, 5])
