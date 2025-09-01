@@ -1,15 +1,8 @@
 /* Pure C demo file for Football. Build it with:
  * bash scripts/build_ocean.sh football local (debug)
  * bash scripts/build_ocean.sh football fast
- * We suggest building and debugging your env in pure C first. You
- * get faster builds and better error messages
  */
  #include "football.h"
-
- /* Puffernet is our lightweight cpu inference library that
-  * lets you load basic PyTorch model architectures so that
-  * you can run them in pure C or on the web via WASM
-  */
  #include "puffernet.h"
  
  int main() {
