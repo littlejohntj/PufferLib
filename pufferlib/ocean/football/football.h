@@ -177,45 +177,77 @@
      }
  
      // Standard across our envs so exiting is always the same
-     if (IsKeyDown(KEY_ESCAPE)) {
-         exit(0);
-     }
+    if (IsKeyDown(KEY_ESCAPE)) {
+        exit(0);
+    }
  
-     BeginDrawing();
-     ClearBackground((Color){6, 24, 24, 255});
+    BeginDrawing();
+    ClearBackground((Color){116, 159, 55, 255});
+
+    float border_size = 10;
+
+    // Draw the field left side border
+    DrawRectangle(
+        0,
+        0,
+        border_size,
+        env->height,
+        WHITE
+    );
+
+    // Draw the field right side border
+    DrawRectangle(
+        env->width - border_size,
+        0,
+        border_size,
+        env->height,
+        WHITE
+    );
+
+    // Draw the field top border
+    DrawRectangle(
+        0,
+        0,
+        env->width,
+        border_size,
+        WHITE
+    );
+
+    // Draw the bottom border
+    DrawRectangle(
+        0,
+        env->height - border_size,
+        env->width,
+        border_size,
+        WHITE
+    );
  
-     for (int i=0; i<env->num_goals; i++) {
-         Goal* goal = &env->goals[i];
-         DrawTexture(
-             env->client->star,
-             goal->x - 32,
-             goal->y - 32,
-             WHITE
-         );
-     }
+    for (int i=0; i<env->num_goals; i++) {
+        Goal* goal = &env->goals[i];
+        DrawTexture(
+            env->client->star,
+            goal->x - 32,
+            goal->y - 32,
+            WHITE
+        );
+    }
  
-     for (int i=0; i<env->num_agents; i++) {
-         Agent* agent = &env->agents[i];
-         float heading = agent->heading;
-         DrawTexturePro(
-             env->client->puffer,
-             (Rectangle){
-                 (heading < PI/2 || heading > 3*PI/2) ? 0 : 128,
-                 0, 128, 128,
-             },
-             (Rectangle){
-                 agent->x - 64,
-                 agent->y - 64,
-                 128,
-                 128
-             },
-             (Vector2){0, 0},
-             0,
-             WHITE
-         );
-     }
+    for (int i=0; i<env->num_agents; i++) {
+
+        Agent* agent = &env->agents[i];
+        float heading = agent->heading;
+        float agent_size = 20;
+        float half_agent = agent_size * 0.5;
+        DrawRectangle(
+            agent->x - half_agent, // X
+            agent->y - half_agent, // Y
+            agent_size, // Width
+            agent_size, // Height
+            (Color){255, 0, 0, 255}
+        );
+    }
  
-     EndDrawing();
+    EndDrawing();
  }
  
  // Required function. Should clean up anything you allocated

@@ -17,7 +17,7 @@
      LinearLSTM* net = make_linearlstm(weights, num_agents, num_obs, logit_sizes, 2);
  
      Football env = {
-         .width = 1080,
+         .width = 318,
          .height = 720,
          .num_agents = num_agents,
          .num_goals = num_goals 
