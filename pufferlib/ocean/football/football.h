@@ -18,6 +18,11 @@ typedef struct {
     // Any extra fields you add here may be exported to Python in binding.c
     float n; // Required as the last field 
 } Log;
+
+typedef struct {
+    float quarter;
+    float ball_on;
+} Game;
  
 typedef struct {
     Texture2D puffer;
@@ -30,8 +35,8 @@ typedef struct {
     float heading;
     float speed;
     int ticks_since_reward;
-    int has_ball;
-    int team;
+    float has_ball;
+    float team;
 } Agent;
  
 // Required that you have some struct for your env
@@ -40,6 +45,7 @@ typedef struct {
     Log log; // Required field. Env binding code uses this to aggregate logs
     Client* client;
     Agent* agents;
+    Game* game;
     float* observations; // Required. You can use any obs type, but make sure it matches in Python!
     int* actions; // Required. int* for discrete/multidiscrete, float* for box
     float* rewards; // Required
@@ -55,23 +61,24 @@ typedef struct {
 */
 void init(Football* env) {
     env->agents = calloc(env->num_agents, sizeof(Agent));
+    env->game = calloc(1, sizeof(Game));
     // env->goals = calloc(env->num_goals, sizeof(Goal));
 }
 
 void reset_round(Football* env) {
     float starting_delta = 100;
 
-    env->agents[0].has_ball = 1;
+    env->agents[0].has_ball = 1.0f;
     env->agents[0].x = env->width * 0.5;
     env->agents[0].y = ( env->height * 0.5 ) + starting_delta;
     env->agents[0].ticks_since_reward = 0;
-    env->agents[0].team = 0;
+    env->agents[0].team = 0.0f;
 
-    env->agents[1].has_ball = 0;
+    env->agents[1].has_ball = 0.0f;
     env->agents[1].x = env->width * 0.5;
     env->agents[1].y = ( env->height * 0.5 ) - starting_delta;
     env->agents[1].ticks_since_reward = 0;
-    env->agents[1].team = 1;
+    env->agents[1].team = 1.0f;
 }
  
 void update_game(Football* env) {
@@ -99,19 +106,12 @@ void update_game(Football* env) {
         env->log.n++;
         env->log.episode_return += 1.0f;
         reset_round(env);
-    } else if ( offense->y >= ( env->height - ( env->height * 0.083 ) ) ) {
-        env->rewards[1] = 1.0f;
+    } else if ( defense->ticks_since_reward >= 512 ) {
+        env->rewards[1] = -1.0f;
         env->rewards[0] = -1.0f;
         env->log.perf += 1.0f;
         env->log.score += 1.0f;
         env->log.n++;
-        env->log.episode_return += 1.0f;
-        reset_round(env);
-    } else if ( defense->ticks_since_reward >= 1024 ) {
-        env->rewards[1] = -0.5f;
-        env->rewards[0] = -0.5f;
-        env->log.perf += 1.0f;
-        env->log.score += 1.0f;
         env->log.episode_return += 1.0f;
         reset_round(env);
     }
@@ -130,20 +130,26 @@ void compute_observations(Football* env) {
             Agent* other = &env->agents[b];
             env->observations[obs_idx++] = (other->x - agent->x)/env->width;
             env->observations[obs_idx++] = (other->y - agent->y)/env->height;
-            env->observations[obs_idx++] = (other->team == agent->team ? 1 : 0);
-            env->observations[obs_idx++] = other->has_ball;
+            // env->observations[obs_idx++] = (other->team == agent->team) ? 1.0f : 0.0f;
+            // env->observations[obs_idx++] = other->has_ball;
         }
         env->observations[obs_idx++] = agent->heading/(2*PI);
         env->observations[obs_idx++] = env->rewards[a];
         env->observations[obs_idx++] = agent->x/env->width;
         env->observations[obs_idx++] = agent->y/env->height;
-        env->observations[obs_idx++] = agent->team;
-        env->observations[obs_idx++] = agent->has_ball;
+        // env->observations[obs_idx++] = agent->team;
+        // env->observations[obs_idx++] = agent->has_ball;
     }
 }
 
+void reset_game(Football* env) {
+    // env->game->
+}
+
+
 // Required function
 void c_reset(Football* env) {
+    reset_game(env);
     reset_round(env);
     compute_observations(env);
 }

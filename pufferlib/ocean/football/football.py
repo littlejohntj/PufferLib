@@ -29,7 +29,6 @@ class Football(pufferlib.PufferEnv):
                 seed, width=width, height=height,
                 num_agents=num_agents, num_goals=num_goals)
             c_envs.append(c_env)
-
         self.c_envs = binding.vectorize(*c_envs)
 
     def reset(self, seed=0):

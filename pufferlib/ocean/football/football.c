@@ -7,13 +7,13 @@
  
  int main() {
     int num_agents = 2;
-    int num_obs = 4*(num_agents) + 6;
+    int num_obs = 2*(num_agents) + 4;
 
     // Weights are exported by running puffer export
-    Weights* weights = load_weights("resources/football/football.bin", 137743);
+    // Weights* weights = load_weights("resources/football/football.bin", 137743);
 
     int logit_sizes[2] = {9, 5};
-    LinearLSTM* net = make_linearlstm(weights, num_agents, num_obs, logit_sizes, 2);
+    // LinearLSTM* net = make_linearlstm(weights, num_agents, num_obs, logit_sizes, 2);
 
     Football env = {
         .width = 318,
@@ -39,13 +39,13 @@
             env.actions[2*i + 1] = rand() % 5;
         }
 
-        forward_linearlstm(net, env.observations, env.actions);
+        // forward_linearlstm(net, env.observations, env.actions);
         c_step(&env);
         c_render(&env);
     }
  
     // Try to clean up after yourself
-    free_linearlstm(net);
+    // free_linearlstm(net);
     free(env.observations);
     free(env.actions);
     free(env.rewards);
