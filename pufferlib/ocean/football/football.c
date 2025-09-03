@@ -7,8 +7,7 @@
  
  int main() {
     int num_agents = 2;
-    int num_goals = 1;
-    int num_obs = 2*(num_agents + num_goals) + 4;
+    int num_obs = 4*(num_agents) + 6;
 
     // Weights are exported by running puffer export
     Weights* weights = load_weights("resources/football/football.bin", 137743);
@@ -19,8 +18,7 @@
     Football env = {
         .width = 318,
         .height = 720,
-        .num_agents = num_agents,
-        .num_goals = num_goals 
+        .num_agents = num_agents
     };
     init(&env);
  
@@ -54,5 +52,3 @@
     free(env.terminals);
     c_close(&env);
 }
- 
- 

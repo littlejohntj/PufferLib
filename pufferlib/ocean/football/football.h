@@ -30,12 +30,9 @@ typedef struct {
     float heading;
     float speed;
     int ticks_since_reward;
+    int has_ball;
+    int team;
 } Agent;
- 
-typedef struct {
-    float x;
-    float y;
-} Goal;
  
 // Required that you have some struct for your env
 // Recommended that you name it the same as the env file
@@ -43,7 +40,6 @@ typedef struct {
     Log log; // Required field. Env binding code uses this to aggregate logs
     Client* client;
     Agent* agents;
-    Goal* goals;
     float* observations; // Required. You can use any obs type, but make sure it matches in Python!
     int* actions; // Required. int* for discrete/multidiscrete, float* for box
     float* rewards; // Required
@@ -51,7 +47,6 @@ typedef struct {
     int width;
     int height;
     int num_agents;
-    int num_goals;
 } Football;
 
 /* Recommended to have an init function of some kind if you allocate 
@@ -60,30 +55,65 @@ typedef struct {
 */
 void init(Football* env) {
     env->agents = calloc(env->num_agents, sizeof(Agent));
-    env->goals = calloc(env->num_goals, sizeof(Goal));
+    // env->goals = calloc(env->num_goals, sizeof(Goal));
+}
+
+void reset_round(Football* env) {
+    float starting_delta = 100;
+
+    env->agents[0].has_ball = 1;
+    env->agents[0].x = env->width * 0.5;
+    env->agents[0].y = ( env->height * 0.5 ) + starting_delta;
+    env->agents[0].ticks_since_reward = 0;
+    env->agents[0].team = 0;
+
+    env->agents[1].has_ball = 0;
+    env->agents[1].x = env->width * 0.5;
+    env->agents[1].y = ( env->height * 0.5 ) - starting_delta;
+    env->agents[1].ticks_since_reward = 0;
+    env->agents[1].team = 1;
 }
  
-void update_goals(Football* env) {
-    for (int a=0; a<env->num_agents; a++) {
-        Agent* agent = &env->agents[a];
-        for (int g=0; g<env->num_goals; g++) {
-            Goal* goal = &env->goals[g];
-            float dx = (goal->x - agent->x);
-            float dy = (goal->y - agent->y);
-            float dist = sqrt(dx*dx + dy*dy);
-            if (dist > 32) {
-                continue;
-            }
-            goal->x = rand() % env->width;
-            goal->y = rand() % env->height;
-            env->rewards[a] = 1.0f;
-            env->log.perf += 1.0f;
-            env->log.score += 1.0f;
-            env->log.episode_length += agent->ticks_since_reward;
-            agent->ticks_since_reward = 0;
-            env->log.episode_return += 1.0f;
-            env->log.n++;
-        }
+void update_game(Football* env) {
+
+    Agent* offense = &env->agents[0];
+    Agent* defense = &env->agents[1];
+
+    float dx = (offense->x - defense->x);
+    float dy = (offense->y - defense->y);
+    float dist = sqrt(dx*dx + dy*dy);
+
+    if (dist <= 15) {
+        env->rewards[1] = 1.0f;
+        env->rewards[0] = -1.0f;
+        env->log.perf += 1.0f;
+        env->log.score += 1.0f;
+        env->log.n++;
+        env->log.episode_return += 1.0f;
+        reset_round(env);
+    } else if ( offense->y <= ( env->height * 0.083 ) ) {
+        env->rewards[0] = 1.0f;
+        env->rewards[1] = -1.0f;
+        env->log.perf += 1.0f;
+        env->log.score += 1.0f;
+        env->log.n++;
+        env->log.episode_return += 1.0f;
+        reset_round(env);
+    } else if ( offense->y >= ( env->height - ( env->height * 0.083 ) ) ) {
+        env->rewards[1] = 1.0f;
+        env->rewards[0] = -1.0f;
+        env->log.perf += 1.0f;
+        env->log.score += 1.0f;
+        env->log.n++;
+        env->log.episode_return += 1.0f;
+        reset_round(env);
+    } else if ( defense->ticks_since_reward >= 1024 ) {
+        env->rewards[1] = -0.5f;
+        env->rewards[0] = -0.5f;
+        env->log.perf += 1.0f;
+        env->log.score += 1.0f;
+        env->log.episode_return += 1.0f;
+        reset_round(env);
     }
 }
  
@@ -96,37 +126,28 @@ void compute_observations(Football* env) {
     int obs_idx = 0;
     for (int a=0; a<env->num_agents; a++) {
         Agent* agent = &env->agents[a];
-        for (int g=0; g<env->num_goals; g++) {
-            Goal* goal = &env->goals[g];
-            env->observations[obs_idx++] = (goal->x - agent->x)/env->width;
-            env->observations[obs_idx++] = (goal->y - agent->y)/env->height;
-        }
-        for (int a=0; a<env->num_agents; a++) {
-            Agent* other = &env->agents[a];
+        for (int b=0; b<env->num_agents; b++) {
+            Agent* other = &env->agents[b];
             env->observations[obs_idx++] = (other->x - agent->x)/env->width;
             env->observations[obs_idx++] = (other->y - agent->y)/env->height;
+            env->observations[obs_idx++] = (other->team == agent->team ? 1 : 0);
+            env->observations[obs_idx++] = other->has_ball;
         }
         env->observations[obs_idx++] = agent->heading/(2*PI);
         env->observations[obs_idx++] = env->rewards[a];
         env->observations[obs_idx++] = agent->x/env->width;
         env->observations[obs_idx++] = agent->y/env->height;
+        env->observations[obs_idx++] = agent->team;
+        env->observations[obs_idx++] = agent->has_ball;
     }
 }
 
 // Required function
 void c_reset(Football* env) {
-    for (int i=0; i<env->num_agents; i++) {
-        env->agents[i].x = rand() % env->width;
-        env->agents[i].y = rand() % env->height;
-        env->agents[i].ticks_since_reward = 0;
-    }
-    for (int i=0; i<env->num_goals; i++) {
-        env->goals[i].x = rand() % env->width;
-        env->goals[i].y = rand() % env->height;
-    }
+    reset_round(env);
     compute_observations(env);
 }
- 
+
 float clip(float val, float min, float max) {
     if (val < min) {
         return min;
@@ -135,7 +156,7 @@ float clip(float val, float min, float max) {
     }
     return val;
 }
- 
+
 // Required function
 void c_step(Football* env) {
     for (int i=0; i<env->num_agents; i++) {
@@ -155,12 +176,12 @@ void c_step(Football* env) {
         agent->y += agent->speed*sinf(agent->heading);
         agent->y = clip(agent->y, 0, env->height);
 
-        if (agent->ticks_since_reward % 512 == 0) {
-            env->agents[i].x = rand() % env->width;
-            env->agents[i].y = rand() % env->height;
-        }
+        // if (agent->ticks_since_reward % 512 == 0) {
+        //     env->agents[i].x = rand() % env->width;
+        //     env->agents[i].y = rand() % env->height;
+        // }
     }
-    update_goals(env);
+    update_game(env);
     compute_observations(env);
 }
  
@@ -172,8 +193,8 @@ void c_step(Football* env) {
          env->client = (Client*)calloc(1, sizeof(Client));
  
          // Don't do this before calling InitWindow
-         env->client->puffer = LoadTexture("resources/shared/puffers_128.png");
-         env->client->star = LoadTexture("resources/football/star.png");
+        //  env->client->puffer = LoadTexture("resources/shared/puffers_128.png");
+        //  env->client->star = LoadTexture("resources/football/star.png");
      }
  
      // Standard across our envs so exiting is always the same
@@ -222,19 +243,16 @@ void c_step(Football* env) {
         WHITE
     );
  
-    for (int i=0; i<env->num_goals; i++) {
-        Goal* goal = &env->goals[i];
-        DrawTexture(
-            env->client->star,
-            goal->x - 32,
-            goal->y - 32,
-            WHITE
-        );
-    }
- 
     for (int i=0; i<env->num_agents; i++) {
 
+        Color player_color = (Color){255, 0, 0, 255};
+
         Agent* agent = &env->agents[i];
+
+        if ( i == 0 ) {
+            player_color =  (Color){240, 229, 146, 255};
+        }
+
         float heading = agent->heading;
         float agent_size = 20;
         float half_agent = agent_size * 0.5;
@@ -243,7 +261,7 @@ void c_step(Football* env) {
             agent->y - half_agent, // Y
             agent_size, // Width
             agent_size, // Height
-            (Color){255, 0, 0, 255}
+            player_color
         );
     }
 
@@ -254,13 +272,11 @@ void c_step(Football* env) {
 // Do not free env->observations, actions, rewards, terminals
 void c_close(Football* env) {
     free(env->agents);
-    free(env->goals);
     if (env->client != NULL) {
         Client* client = env->client;
-        UnloadTexture(client->puffer);
-        UnloadTexture(client->star);
+        // UnloadTexture(client->puffer);
+        // UnloadTexture(client->star);
         CloseWindow();
         free(client);
     }
 }
- 
