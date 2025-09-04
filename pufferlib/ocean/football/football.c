@@ -23,7 +23,7 @@
     init(&env);
  
     // Allocate these manually since they aren't being passed from Python
-    env.observations = calloc(env.num_agents*num_obs, sizeof(float));
+    env.observations = calloc(env.num_agents*num_obs + 1, sizeof(float));
     env.actions = calloc(2*env.num_agents, sizeof(int));
     env.rewards = calloc(env.num_agents, sizeof(float));
     env.terminals = calloc(env.num_agents, sizeof(unsigned char));

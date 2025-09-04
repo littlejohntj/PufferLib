@@ -21,26 +21,23 @@ typedef struct {
 
 typedef struct {
     float quarter;
+    float play_length;
     float team_one_score;
     float team_two_score;
     float line_of_scrimage;
 } Game;
- 
+
 typedef struct {
     Texture2D puffer;
     Texture2D star;
 } Client;
 
 typedef struct {
-    // float mass;
-
     float x;
     float y;
     float heading;
     float speed;
     int ticks_since_reward;
-    float has_ball;
-    float team;
 } Agent;
  
 // Required that you have some struct for your env
@@ -71,17 +68,15 @@ void init(Football* env) {
 void reset_round(Football* env) {
     float starting_delta = 100;
 
-    env->agents[0].has_ball = 1.0f;
+    env->game->play_length = 0;
+
     env->agents[0].x = env->width * 0.5;
     env->agents[0].y = ( env->height * 0.5 ) + starting_delta;
     env->agents[0].ticks_since_reward = 0;
-    env->agents[0].team = 0.0f;
 
-    env->agents[1].has_ball = 0.0f;
     env->agents[1].x = env->width * 0.5;
     env->agents[1].y = ( env->height * 0.5 ) - starting_delta;
     env->agents[1].ticks_since_reward = 0;
-    env->agents[1].team = 1.0f;
 }
  
 void update_game(Football* env) {
@@ -109,7 +104,7 @@ void update_game(Football* env) {
         env->log.n++;
         env->log.episode_return += 1.0f;
         reset_round(env);
-    } else if ( defense->ticks_since_reward >= 512 ) {
+    } else if ( env->game->play_length >= 512 ) {
         env->rewards[1] = -1.0f;
         env->rewards[0] = -1.0f;
         env->log.perf += 1.0f;
@@ -133,15 +128,11 @@ void compute_observations(Football* env) {
             Agent* other = &env->agents[b];
             env->observations[obs_idx++] = (other->x - agent->x)/env->width;
             env->observations[obs_idx++] = (other->y - agent->y)/env->height;
-            // env->observations[obs_idx++] = other->has_ball;
-            // env->observations[obs_idx++] = other->team;
         }
         env->observations[obs_idx++] = agent->heading/(2*PI);
         env->observations[obs_idx++] = env->rewards[a];
         env->observations[obs_idx++] = agent->x/env->width;
         env->observations[obs_idx++] = agent->y/env->height;
-        // env->observations[obs_idx++] = agent->has_ball;
-        // env->observations[obs_idx++] = agent->team;
     }
 }
 
@@ -150,6 +141,7 @@ void reset_game(Football* env) {
     env->game->team_one_score = 0.0f;
     env->game->team_two_score = 0.0f;
     env->game->line_of_scrimage = env->height / 2.0f;
+    env->game->play_length = 0;
 }
 
 // Required function
@@ -170,6 +162,9 @@ float clip(float val, float min, float max) {
 
 // Required function
 void c_step(Football* env) {
+    
+    env->game->play_length += 1;
+
     for (int i=0; i<env->num_agents; i++) {
         env->rewards[i] = 0;
         Agent* agent = &env->agents[i];
