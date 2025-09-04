@@ -10,7 +10,7 @@ class Football(pufferlib.PufferEnv):
     def __init__(self, num_envs=1, width=318, height=720, num_agents=2,
             render_mode=None, log_interval=128, size=11, buf=None, seed=0):
         self.single_observation_space = gymnasium.spaces.Box(low=0, high=1,
-            shape=(3*(num_agents) + 5,), dtype=np.float32)
+            shape=(2*(num_agents) + 4,), dtype=np.float32)
         self.single_action_space = gymnasium.spaces.MultiDiscrete([9, 5])
 
         self.render_mode = render_mode

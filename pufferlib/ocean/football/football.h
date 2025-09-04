@@ -32,6 +32,8 @@ typedef struct {
 } Client;
 
 typedef struct {
+    // float mass;
+
     float x;
     float y;
     float heading;
@@ -131,14 +133,14 @@ void compute_observations(Football* env) {
             Agent* other = &env->agents[b];
             env->observations[obs_idx++] = (other->x - agent->x)/env->width;
             env->observations[obs_idx++] = (other->y - agent->y)/env->height;
-            env->observations[obs_idx++] = other->has_ball;
+            // env->observations[obs_idx++] = other->has_ball;
             // env->observations[obs_idx++] = other->team;
         }
         env->observations[obs_idx++] = agent->heading/(2*PI);
         env->observations[obs_idx++] = env->rewards[a];
         env->observations[obs_idx++] = agent->x/env->width;
         env->observations[obs_idx++] = agent->y/env->height;
-        env->observations[obs_idx++] = agent->has_ball;
+        // env->observations[obs_idx++] = agent->has_ball;
         // env->observations[obs_idx++] = agent->team;
     }
 }
@@ -172,7 +174,7 @@ void c_step(Football* env) {
         env->rewards[i] = 0;
         Agent* agent = &env->agents[i];
         agent->ticks_since_reward += 1;
-
+        
         agent->heading += ((float)env->actions[2*i] - 4.0f)/12.0f;
         agent->heading = clip(agent->heading, 0, 2*PI);
 
