@@ -7,7 +7,7 @@
  
  int main() {
     int num_agents = 2;
-    int num_obs = 2*(num_agents) + 4;
+    int num_obs = 3*(num_agents) + 5;
 
     // Weights are exported by running puffer export
     // Weights* weights = load_weights("resources/football/football.bin", 137743);

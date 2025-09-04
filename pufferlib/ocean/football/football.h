@@ -21,7 +21,9 @@ typedef struct {
 
 typedef struct {
     float quarter;
-    float ball_on;
+    float team_one_score;
+    float team_two_score;
+    float line_of_scrimage;
 } Game;
  
 typedef struct {
@@ -62,7 +64,6 @@ typedef struct {
 void init(Football* env) {
     env->agents = calloc(env->num_agents, sizeof(Agent));
     env->game = calloc(1, sizeof(Game));
-    // env->goals = calloc(env->num_goals, sizeof(Goal));
 }
 
 void reset_round(Football* env) {
@@ -90,7 +91,7 @@ void update_game(Football* env) {
     float dy = (offense->y - defense->y);
     float dist = sqrt(dx*dx + dy*dy);
 
-    if (dist <= 15) {
+    if (dist <= 25) {
         env->rewards[1] = 1.0f;
         env->rewards[0] = -1.0f;
         env->log.perf += 1.0f;
@@ -130,22 +131,24 @@ void compute_observations(Football* env) {
             Agent* other = &env->agents[b];
             env->observations[obs_idx++] = (other->x - agent->x)/env->width;
             env->observations[obs_idx++] = (other->y - agent->y)/env->height;
-            // env->observations[obs_idx++] = (other->team == agent->team) ? 1.0f : 0.0f;
-            // env->observations[obs_idx++] = other->has_ball;
+            env->observations[obs_idx++] = other->has_ball;
+            // env->observations[obs_idx++] = other->team;
         }
         env->observations[obs_idx++] = agent->heading/(2*PI);
         env->observations[obs_idx++] = env->rewards[a];
         env->observations[obs_idx++] = agent->x/env->width;
         env->observations[obs_idx++] = agent->y/env->height;
+        env->observations[obs_idx++] = agent->has_ball;
         // env->observations[obs_idx++] = agent->team;
-        // env->observations[obs_idx++] = agent->has_ball;
     }
 }
 
 void reset_game(Football* env) {
-    // env->game->
+    env->game->quarter = 1.0f;
+    env->game->team_one_score = 0.0f;
+    env->game->team_two_score = 0.0f;
+    env->game->line_of_scrimage = env->height / 2.0f;
 }
-
 
 // Required function
 void c_reset(Football* env) {
@@ -182,10 +185,6 @@ void c_step(Football* env) {
         agent->y += agent->speed*sinf(agent->heading);
         agent->y = clip(agent->y, 0, env->height);
 
-        // if (agent->ticks_since_reward % 512 == 0) {
-        //     env->agents[i].x = rand() % env->width;
-        //     env->agents[i].y = rand() % env->height;
-        // }
     }
     update_game(env);
     compute_observations(env);
@@ -278,6 +277,7 @@ void c_step(Football* env) {
 // Do not free env->observations, actions, rewards, terminals
 void c_close(Football* env) {
     free(env->agents);
+    free(env->game);
     if (env->client != NULL) {
         Client* client = env->client;
         // UnloadTexture(client->puffer);
