@@ -37,7 +37,6 @@ typedef struct {
     float y;
     float heading;
     float speed;
-    int ticks_since_reward;
 } Agent;
  
 // Required that you have some struct for your env
@@ -66,17 +65,15 @@ void init(Football* env) {
 }
 
 void reset_round(Football* env) {
-    float starting_delta = 100;
+    float starting_delta = 100.0f;
 
-    env->game->play_length = 0;
+    env->game->play_length = 0.0f;
 
     env->agents[0].x = env->width * 0.5;
     env->agents[0].y = ( env->height * 0.5 ) + starting_delta;
-    env->agents[0].ticks_since_reward = 0;
 
     env->agents[1].x = env->width * 0.5;
     env->agents[1].y = ( env->height * 0.5 ) - starting_delta;
-    env->agents[1].ticks_since_reward = 0;
 }
  
 void update_game(Football* env) {
@@ -89,28 +86,26 @@ void update_game(Football* env) {
     float dist = sqrt(dx*dx + dy*dy);
 
     if (dist <= 25) {
-        env->rewards[1] = 1.0f;
-        env->rewards[0] = -1.0f;
-        env->log.perf += 1.0f;
-        env->log.score += 1.0f;
+        env->rewards[1] = 3.0f;
+        env->rewards[0] = -3.0f;
+        // env->log.perf += 1.0f;
+        // env->log.score += 1.0f;
         env->log.n++;
-        env->log.episode_return += 1.0f;
+        // env->log.episode_return += 1.0f;
         reset_round(env);
-    } else if ( offense->y <= ( env->height * 0.083 ) ) {
-        env->rewards[0] = 1.0f;
-        env->rewards[1] = -1.0f;
-        env->log.perf += 1.0f;
-        env->log.score += 1.0f;
+    } else if ( offense->y <= ( env->height * 0.25 ) ) {
+        env->rewards[0] = 7.0f;
+        env->rewards[1] = -7.0f;
+        // env->log.perf += 1.0f;
+        // env->log.score += 1.0f;
         env->log.n++;
-        env->log.episode_return += 1.0f;
+        // env->log.episode_return += 1.0f;
         reset_round(env);
-    } else if ( env->game->play_length >= 512 ) {
-        env->rewards[1] = -1.0f;
-        env->rewards[0] = -1.0f;
-        env->log.perf += 1.0f;
-        env->log.score += 1.0f;
+    } else if ( env->game->play_length >= 512.0f ) {
+        env->rewards[1] = -20.0f;
+        env->rewards[0] = -20.0f;
         env->log.n++;
-        env->log.episode_return += 1.0f;
+        // env->log.episode_return += 1.0f;
         reset_round(env);
     }
 }
@@ -141,7 +136,7 @@ void reset_game(Football* env) {
     env->game->team_one_score = 0.0f;
     env->game->team_two_score = 0.0f;
     env->game->line_of_scrimage = env->height / 2.0f;
-    env->game->play_length = 0;
+    env->game->play_length = 0.0f;
 }
 
 // Required function
@@ -163,18 +158,22 @@ float clip(float val, float min, float max) {
 // Required function
 void c_step(Football* env) {
     
-    env->game->play_length += 1;
+    env->game->play_length += 1.0f;
 
     for (int i=0; i<env->num_agents; i++) {
         env->rewards[i] = 0;
         Agent* agent = &env->agents[i];
-        agent->ticks_since_reward += 1;
         
         agent->heading += ((float)env->actions[2*i] - 4.0f)/12.0f;
         agent->heading = clip(agent->heading, 0, 2*PI);
 
         agent->speed += 1.0f*((float)env->actions[2*i + 1] - 2.0f);
-        agent->speed = clip(agent->speed, -5.0f, 5.0f);
+
+        if ( i == 0 ) {
+            agent->speed = 2 * clip(agent->speed, -5.0f, 5.0f);
+        } else {
+            agent->speed = clip(agent->speed, -5.0f, 5.0f);
+        }
 
         agent->x += agent->speed*cosf(agent->heading);
         agent->x = clip(agent->x, 0, env->width);
