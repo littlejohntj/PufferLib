@@ -25,6 +25,7 @@ typedef struct {
     float team_one_score;
     float team_two_score;
     float line_of_scrimage;
+    float player_radius;
 } Game;
 
 typedef struct {
@@ -85,27 +86,25 @@ void update_game(Football* env) {
     float dy = (offense->y - defense->y);
     float dist = sqrt(dx*dx + dy*dy);
 
-    if (dist <= 25) {
-        env->rewards[1] = 3.0f;
-        env->rewards[0] = -3.0f;
-        // env->log.perf += 1.0f;
-        // env->log.score += 1.0f;
+    if (dist <= ( env->game->player_radius * 2.0f )) {
+        env->rewards[1] = 1.0f;
+        env->rewards[0] = -1.0f;
         env->log.n++;
-        // env->log.episode_return += 1.0f;
         reset_round(env);
-    } else if ( offense->y <= ( env->height * 0.25 ) ) {
-        env->rewards[0] = 7.0f;
-        env->rewards[1] = -7.0f;
-        // env->log.perf += 1.0f;
-        // env->log.score += 1.0f;
+    } else if ( offense->y <= ( env->height * 0.25f ) ) {
+        env->rewards[0] = 1.0f;
+        env->rewards[1] = -1.0f;
         env->log.n++;
-        // env->log.episode_return += 1.0f;
+        reset_round(env);
+    } else if ( offense->x < env->game->player_radius || offense->x > ( env->width - env->game->player_radius ) ) {
+        env->rewards[1] = 1.0f;
+        env->rewards[0] = -1.0f;
+        env->log.n++;
         reset_round(env);
     } else if ( env->game->play_length >= 512.0f ) {
-        env->rewards[1] = -20.0f;
-        env->rewards[0] = -20.0f;
+        env->rewards[1] = -1.0f;
+        env->rewards[0] = -1.0f;
         env->log.n++;
-        // env->log.episode_return += 1.0f;
         reset_round(env);
     }
 }
@@ -137,6 +136,7 @@ void reset_game(Football* env) {
     env->game->team_two_score = 0.0f;
     env->game->line_of_scrimage = env->height / 2.0f;
     env->game->play_length = 0.0f;
+    env->game->player_radius = 10;
 }
 
 // Required function
@@ -168,12 +168,7 @@ void c_step(Football* env) {
         agent->heading = clip(agent->heading, 0, 2*PI);
 
         agent->speed += 1.0f*((float)env->actions[2*i + 1] - 2.0f);
-
-        if ( i == 0 ) {
-            agent->speed = 2 * clip(agent->speed, -5.0f, 5.0f);
-        } else {
-            agent->speed = clip(agent->speed, -5.0f, 5.0f);
-        }
+        agent->speed = clip(agent->speed, -5.0f, 5.0f);
 
         agent->x += agent->speed*cosf(agent->heading);
         agent->x = clip(agent->x, 0, env->width);
@@ -243,7 +238,8 @@ void c_step(Football* env) {
         border_size,
         WHITE
     );
- 
+
+    // Draw the agents
     for (int i=0; i<env->num_agents; i++) {
 
         Color player_color = (Color){255, 0, 0, 255};
@@ -254,16 +250,7 @@ void c_step(Football* env) {
             player_color =  (Color){240, 229, 146, 255};
         }
 
-        float heading = agent->heading;
-        float agent_size = 20;
-        float half_agent = agent_size * 0.5;
-        DrawRectangle(
-            agent->x - half_agent, // X
-            agent->y - half_agent, // Y
-            agent_size, // Width
-            agent_size, // Height
-            player_color
-        );
+        DrawCircle(agent->x, agent->y, env->game->player_radius, player_color);
     }
 
     EndDrawing();
