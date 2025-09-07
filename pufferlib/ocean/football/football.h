@@ -188,7 +188,7 @@ void c_step(Football* env) {
          SetTargetFPS(60);
          env->client = (Client*)calloc(1, sizeof(Client));
  
-         // Don't do this before calling InitWindow
+         // Don't do thisbefore calling Init Window
         //  env->client->puffer = LoadTexture("resources/shared/puffers_128.png");
         //  env->client->star = LoadTexture("resources/football/star.png");
      }
