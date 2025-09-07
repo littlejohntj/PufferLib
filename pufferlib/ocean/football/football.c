@@ -12,7 +12,7 @@
     // Weights are exported by running puffer export
     // Weights* weights = load_weights("resources/football/football.bin", 137743);
 
-    int logit_sizes[2] = {9, 5};
+    int logit_sizes[3] = {9, 5, 2};
     // LinearLSTM* net = make_linearlstm(weights, num_agents, num_obs, logit_sizes, 2);
 
     Football env = {
@@ -24,7 +24,7 @@
  
     // Allocate these manually since they aren't being passed from Python
     env.observations = calloc(env.num_agents*num_obs + 1, sizeof(float));
-    env.actions = calloc(2*env.num_agents, sizeof(int));
+    env.actions = calloc(3*env.num_agents, sizeof(int));
     env.rewards = calloc(env.num_agents, sizeof(float));
     env.terminals = calloc(env.num_agents, sizeof(unsigned char));
 
@@ -35,8 +35,9 @@
     // while(True) will break web builds
     while (!WindowShouldClose()) {
         for (int i=0; i<env.num_agents; i++) {
-            env.actions[2*i] = rand() % 9;
-            env.actions[2*i + 1] = rand() % 5;
+            env.actions[3*i] = rand() % 9;
+            env.actions[3*i + 1] = rand() % 5;
+            env.actions[3*i + 2] = rand() % 2;
         }
 
         // forward_linearlstm(net, env.observations, env.actions);

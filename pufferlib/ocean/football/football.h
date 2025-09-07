@@ -38,6 +38,7 @@ typedef struct {
     float y;
     float heading;
     float speed;
+    float boost;
 } Agent;
  
 // Required that you have some struct for your env
@@ -54,6 +55,7 @@ typedef struct {
     int width;
     int height;
     int num_agents;
+    float boost_budget;
 } Football;
 
 /* Recommended to have an init function of some kind if you allocate 
@@ -75,6 +77,9 @@ void reset_round(Football* env) {
 
     env->agents[1].x = env->width * 0.5;
     env->agents[1].y = ( env->height * 0.5 ) - starting_delta;
+
+    env->agents[0].boost = env->boost_budget;
+    env->agents[1].boost = env->boost_budget;
 }
  
 void update_game(Football* env) {
@@ -137,6 +142,7 @@ void reset_game(Football* env) {
     env->game->line_of_scrimage = env->height / 2.0f;
     env->game->play_length = 0.0f;
     env->game->player_radius = 10;
+    env->boost_budget = 50.0f;
 }
 
 // Required function
@@ -164,11 +170,16 @@ void c_step(Football* env) {
         env->rewards[i] = 0;
         Agent* agent = &env->agents[i];
         
-        agent->heading += ((float)env->actions[2*i] - 4.0f)/12.0f;
+        agent->heading += ((float)env->actions[3*i] - 4.0f)/12.0f;
         agent->heading = clip(agent->heading, 0, 2*PI);
 
-        agent->speed += 1.0f*((float)env->actions[2*i + 1] - 2.0f);
+        agent->speed += 1.0f*((float)env->actions[3*i + 1] - 2.0f);
         agent->speed = clip(agent->speed, -5.0f, 5.0f);
+
+        if ( env->actions[3*i + 2] == 1 && agent->boost > 0 ) {
+            agent->boost -= 1.0f;
+            agent->speed = 2.0f * agent->speed;
+        }
 
         agent->x += agent->speed*cosf(agent->heading);
         agent->x = clip(agent->x, 0, env->width);

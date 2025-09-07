@@ -11,7 +11,7 @@ class Football(pufferlib.PufferEnv):
             render_mode=None, log_interval=128, size=11, buf=None, seed=0):
         self.single_observation_space = gymnasium.spaces.Box(low=0, high=1,
             shape=(2*(num_agents) + 4,), dtype=np.float32)
-        self.single_action_space = gymnasium.spaces.MultiDiscrete([9, 5])
+        self.single_action_space = gymnasium.spaces.MultiDiscrete([9, 5, 2])
 
         self.render_mode = render_mode
         self.num_agents = num_envs*num_agents
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     steps = 0
 
     CACHE = 1024
-    actions = np.random.randint(env.single_action_space.nvec, size=(CACHE, 2))
+    actions = np.random.randint(env.single_action_space.nvec, size=(CACHE, 3))
 
     i = 0
     import time
